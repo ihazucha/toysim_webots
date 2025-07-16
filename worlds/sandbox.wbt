@@ -1,0 +1,250 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/MattePaint.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/TireRubber.proto"
+
+WorldInfo {
+  info [
+    "Description: Examples of four wheels vehicles"
+  ]
+  title "Four Wheels"
+  basicTimeStep 16
+  lineScale 0.2
+}
+Viewpoint {
+  orientation 0.18843610628381366 -0.6108318559760827 -0.7690099333385814 5.50816220362771
+  position -1.121791016748794 -0.8508658720893821 0.8609484461358305
+  follow "Alamak"
+  followType "Mounted Shot"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 10 10
+  floorTileSize 2 2
+}
+Robot {
+  translation 0 0 0.032
+  children [
+    DEF ALAMAK_BODY_SH Shape {
+      appearance MattePaint {
+        baseColor 0.168627 0.168627 0.168627
+      }
+      geometry Box {
+        size 0.265 0.125 0.025
+      }
+    }
+    DEF ALAMAK_RL_WHEEL HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor -0.12 0.08 0
+      }
+      device [
+        PositionSensor {
+          name "alamak_rl_position_sensor"
+          resolution 0.00153398
+        }
+        RotationalMotor {
+          name "alamak_rl_motor"
+        }
+      ]
+      endPoint Solid {
+        translation -0.12 0.08 0
+        rotation 0 1 0 0
+        children [
+          DEF ALAMAK_WHEEL_POSE Pose {
+            rotation 1 0 0 -1.5707953071795862
+            children [
+              DEF ALAMAK_WHEEL_SH Shape {
+                appearance TireRubber {
+                }
+                geometry DEF ALAMAK_WHEEL_CYL Cylinder {
+                  height 0.026
+                  radius 0.032
+                }
+              }
+            ]
+          }
+        ]
+        name "alamak_rl_wheel"
+        boundingObject USE ALAMAK_WHEEL_POSE
+        physics Physics {
+        }
+      }
+    }
+    DEF ALAMAK_RR_WHEEL HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor -0.12 -0.08 0
+      }
+      device [
+        RotationalMotor {
+          name "alamak_rr_motor"
+        }
+        PositionSensor {
+          name "alamak_rr_position_sensor"
+          resolution 0.00153398
+        }
+      ]
+      endPoint Solid {
+        translation -0.12 -0.08 0
+        rotation 0 1 0 0
+        children [
+          USE ALAMAK_WHEEL_POSE
+        ]
+        name "alamak_rr_wheel"
+        boundingObject USE ALAMAK_WHEEL_POSE
+        physics Physics {
+        }
+      }
+    }
+    DEF ALAMAK_FL_WHEEL Hinge2Joint {
+      jointParameters HingeJointParameters {
+        axis 0 0 1
+        anchor 0.065 0.08 0
+      }
+      jointParameters2 JointParameters {
+        axis 0 1 0
+      }
+      device [
+        RotationalMotor {
+          name "alamak_fl_steer"
+        }
+      ]
+      endPoint Solid {
+        translation 0.065 0.08 0
+        children [
+          USE ALAMAK_WHEEL_POSE
+        ]
+        name "alamak_fl_wheel"
+        boundingObject USE ALAMAK_WHEEL_POSE
+        physics Physics {
+        }
+      }
+    }
+    DEF ALAMAK_FR_WHEEL Hinge2Joint {
+      jointParameters HingeJointParameters {
+        axis 0 0 1
+        anchor 0.065 -0.08 0
+      }
+      jointParameters2 JointParameters {
+        axis 0 1 0
+      }
+      device [
+        RotationalMotor {
+          name "alamak_fr_steer"
+        }
+      ]
+      endPoint Solid {
+        translation 0.065 -0.08 0
+        children [
+          USE ALAMAK_WHEEL_POSE
+        ]
+        name "alamak_fr_wheel"
+        boundingObject USE ALAMAK_WHEEL_POSE
+        physics Physics {
+        }
+      }
+    }
+    InertialUnit {
+      name "alamak_gyro"
+    }
+    Accelerometer {
+      name "alamak_accel"
+    }
+    Compass {
+      name "alamak_compass"
+    }
+    Camera {
+      translation 0.06 0 0.125
+      children [
+        Solid {
+          children [
+            Pose {
+              rotation 1 0 0 -1.5708
+              children [
+                DEF BOARD Group {
+                  children [
+                    Shape {
+                      appearance PBRAppearance {
+                        baseColorMap ImageTexture {
+                          url [
+                            "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/nvidia/jetbot/protos/textures/raspberry_pi_camera.jpg"
+                          ]
+                        }
+                        roughness 1
+                        metalness 0
+                      }
+                      geometry IndexedFaceSet {
+                        coord Coordinate {
+                          point [
+                            -0.0005 -0.01199995592153876 -0.011999999999919044
+                            -0.0005 0.01200004407846124 -0.011999999999919044
+                            -0.0005 -0.01200004407846124 0.011999999999919044
+                            -0.0005 0.01199995592153876 0.011999999999919044
+                            0.0005 -0.01199995592153876 -0.011999999999919044
+                            0.0005 0.01200004407846124 -0.011999999999919044
+                            0.0005 -0.01200004407846124 0.011999999999919044
+                            0.0005 0.01199995592153876 0.011999999999919044
+                          ]
+                        }
+                        texCoord TextureCoordinate {
+                          point [
+                            0 0
+                            1 0
+                            0 1
+                            1 1
+                            0.0001 0.0001
+                            0.9999 0.0001
+                            0.0001 0.9999
+                            0.9999 0.9999
+                          ]
+                        }
+                        coordIndex [
+                          1, 0, 2, 3, -1, 4, 5, 7, 6, -1, 5, 1, 3, 7, -1, 0, 4, 6, 2, -1, 7, 3, 2, 6, -1, 4, 0, 1, 5, -1
+                        ]
+                        texCoordIndex [
+                          1, 0, 2, 3, -1, 0, 1, 3, 2, -1, 1, 5, 7, 3, -1, 0, 4, 6, 2, -1, 7, 3, 2, 6, -1, 0, 4, 5, 1, -1
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+            Pose {
+              translation -0.003 0 -0.0015
+              children [
+                Shape {
+                  appearance DEF LIGHT_GRAY_APPEARANCE PBRAppearance {
+                    baseColor 0.729412 0.741176 0.713725
+                    roughness 0.5
+                    metalness 0.2
+                  }
+                  geometry Box {
+                    size 0.004 0.022 0.027
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+      name "alamak_camera"
+      fieldOfView 1.0472
+      width 820
+      height 616
+    }
+  ]
+  name "Alamak"
+  description "NXP Cup Alamak - model vehicle"
+  boundingObject USE ALAMAK_BODY_SH
+  physics Physics {
+  }
+  controller "alamak"
+}
