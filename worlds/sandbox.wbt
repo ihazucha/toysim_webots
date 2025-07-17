@@ -11,7 +11,8 @@ WorldInfo {
     "Description: Examples of four wheels vehicles"
   ]
   title "Four Wheels"
-  basicTimeStep 16
+  basicTimeStep 8
+  FPS 120
   lineScale 0.2
 }
 Viewpoint {
@@ -46,16 +47,17 @@ Robot {
       }
       device [
         PositionSensor {
-          name "alamak_rl_position_sensor"
+          name "rl_encoder"
           resolution 0.00153398
         }
         RotationalMotor {
-          name "alamak_rl_motor"
+          name "rl_motor"
+          maxVelocity 100
         }
       ]
       endPoint Solid {
-        translation -0.12 0.08 0
-        rotation 0 1 0 0
+        translation -0.12000064696667458 0.08000075424238581 -5.762730195466481e-09
+        rotation -0.7707191538696051 0.00015734366194802455 -0.6371749846796343 6.2828110755565625
         children [
           DEF ALAMAK_WHEEL_POSE Pose {
             rotation 1 0 0 -1.5707953071795862
@@ -84,16 +86,17 @@ Robot {
       }
       device [
         RotationalMotor {
-          name "alamak_rr_motor"
+          name "rr_motor"
+          maxVelocity 100
         }
         PositionSensor {
-          name "alamak_rr_position_sensor"
+          name "rr_encoder"
           resolution 0.00153398
         }
       ]
       endPoint Solid {
-        translation -0.12 -0.08 0
-        rotation 0 1 0 0
+        translation -0.12000144537206893 -0.08000159518239915 -1.4540245600655905e-06
+        rotation -0.770721298305927 0.00015733431760616245 -0.6371723907888186 6.282811097415651
         children [
           USE ALAMAK_WHEEL_POSE
         ]
@@ -113,11 +116,13 @@ Robot {
       }
       device [
         RotationalMotor {
-          name "alamak_fl_steer"
+          name "fl_servo"
+          maxTorque 12
         }
       ]
       endPoint Solid {
-        translation 0.065 0.08 0
+        translation 0.06500092337164304 0.08000155513982896 9.557792592895883e-07
+        rotation -0.9942559772305836 -2.1234878406387092e-12 0.1070282754287722 6.2828224407336055
         children [
           USE ALAMAK_WHEEL_POSE
         ]
@@ -137,11 +142,13 @@ Robot {
       }
       device [
         RotationalMotor {
-          name "alamak_fr_steer"
+          name "fr_servo"
+          maxTorque 12
         }
       ]
       endPoint Solid {
-        translation 0.065 -0.08 0
+        translation 0.06499964028409694 -0.0800008969279732 1.1203611734243677e-06
+        rotation -0.7238587299209805 -6.074546719380226e-13 -0.689948214808318 6.28276979919428
         children [
           USE ALAMAK_WHEEL_POSE
         ]
@@ -152,13 +159,13 @@ Robot {
       }
     }
     InertialUnit {
-      name "alamak_gyro"
+      name "imu_gyro"
     }
     Accelerometer {
-      name "alamak_accel"
+      name "imu_accel"
     }
     Compass {
-      name "alamak_compass"
+      name "imu_compass"
     }
     Camera {
       translation 0.06 0 0.125
@@ -235,7 +242,7 @@ Robot {
           ]
         }
       ]
-      name "alamak_camera"
+      name "rpi_camera_v2"
       fieldOfView 1.0472
       width 820
       height 616
@@ -245,6 +252,8 @@ Robot {
   description "NXP Cup Alamak - model vehicle"
   boundingObject USE ALAMAK_BODY_SH
   physics Physics {
+    density -1
+    mass 5
   }
   controller "alamak"
 }

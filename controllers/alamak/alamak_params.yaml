@@ -1,0 +1,36 @@
+# Alamak System ID (in SI units if not specified)
+
+chassis_construction:
+  wheelbase: 0.185
+  track: 0.155
+  total_len: 0.265
+  total_width: 0.185
+  wheel_radius: 0.032
+  max_steer_angle: 20 # [deg]
+motor_params:
+  torque: null
+sensor_params:
+  encoders:
+    resolution: 4096
+    sampling_rate: 0.000150
+  imu: {}
+  camera:
+    model: "Raspberry Pi Camera v2"
+    img_width: 820
+    img_height: 616
+    fps: 30
+    fov: 60 # [deg]
+measured_params:
+  weight: null
+  reference_point: "rear_axle_center"
+  center_of_mass: [] # null (x, y, z from reference point)
+  inertia: null
+  acceleration_at_power_levels:
+    0.1: null
+    0.2: null
+    0.3: null
+    0.4: null
+    0.5: null
+    0.6: null
+    0.7: null
+  max_speed: null
