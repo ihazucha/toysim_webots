@@ -16,8 +16,8 @@ WorldInfo {
   lineScale 0.2
 }
 Viewpoint {
-  orientation 0.18843610628381366 -0.6108318559760827 -0.7690099333385814 5.50816220362771
-  position -1.121791016748794 -0.8508658720893821 0.8609484461358305
+  orientation 0.09075647598369513 -0.5837792794711022 -0.8068240297160353 5.878618643053207
+  position -3.3029845999510155 -1.2397903154009347 1.0534896812410834
   follow "Alamak"
   followType "Mounted Shot"
 }
@@ -26,10 +26,10 @@ TexturedBackground {
 TexturedBackgroundLight {
 }
 RectangleArena {
-  floorSize 10 10
+  floorSize 50 50
   floorTileSize 2 2
 }
-Robot {
+DEF ALAMAK Robot {
   translation 0 0 0.032
   children [
     DEF ALAMAK_BODY_SH Shape {
@@ -119,10 +119,12 @@ Robot {
           name "fl_servo"
           maxTorque 12
         }
+        PositionSensor {
+          name "fl_servo_encoder"
+        }
       ]
       endPoint Solid {
         translation 0.06500092337164304 0.08000155513982896 9.557792592895883e-07
-        rotation -0.9942559772305836 -2.1234878406387092e-12 0.1070282754287722 6.2828224407336055
         children [
           USE ALAMAK_WHEEL_POSE
         ]
@@ -145,10 +147,12 @@ Robot {
           name "fr_servo"
           maxTorque 12
         }
+        PositionSensor {
+          name "fr_servo_encoder"
+        }
       ]
       endPoint Solid {
         translation 0.06499964028409694 -0.0800008969279732 1.1203611734243677e-06
-        rotation -0.7238587299209805 -6.074546719380226e-13 -0.689948214808318 6.28276979919428
         children [
           USE ALAMAK_WHEEL_POSE
         ]
@@ -253,7 +257,11 @@ Robot {
   boundingObject USE ALAMAK_BODY_SH
   physics Physics {
     density -1
-    mass 5
+    mass 4
+    centerOfMass [
+      -0.03 0 0.05
+    ]
   }
   controller "alamak"
+  supervisor TRUE
 }

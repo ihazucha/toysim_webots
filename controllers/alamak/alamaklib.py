@@ -1,17 +1,59 @@
 import math
+import numpy as np
+import cv2
+from typing import List
+from scipy.spatial.transform import Rotation
+
 
 from controller import (
+    Supervisor,
     Accelerometer,
     InertialUnit,
     Compass,
     PositionSensor,
     Motor,
+    Camera,
 )
+
 
 class AlamakParams:
     WHEELBASE = 0.185
     TRACK = 0.155
 
+class AlamakSupervisor:
+    def __init__(self, supervisor: Supervisor):
+        self.supervisor = supervisor
+        self.alamak = self.supervisor.getFromDef("ALAMAK")
+        if self.alamak is None:
+            raise ValueError("ALAMAK robot DEF not found in the simulation.")
+
+    def __str__(self):
+        pos = self.position
+        rot = self.rotation
+        vel = self.velocity
+        return f"T [m] {pos[0]:6.2f}, {pos[1]:6.2f}, {pos[2]:6.2f} | " \
+               f"R [rad] {rot[0]:5.2f}, {rot[1]:5.2f}, {rot[2]:5.2f} | " \
+               f"V [m/s] {vel[0]:6.2f}, {vel[1]:6.2f}, {vel[2]:6.2f} | " \
+               f"v [m/s] {self.speed:6.2f}"
+
+    @property
+    def position(self) -> List[float]:
+        return self.alamak.getPosition()
+    
+    @property
+    def rotation(self) -> List[float]:
+        rot_matrix = np.array(self.alamak.getOrientation()).reshape(3, 3)
+        euler = Rotation.from_matrix(rot_matrix).as_euler('xyz', degrees=False)
+        return euler.tolist()
+    
+
+    @property
+    def velocity(self) -> List[float]:
+        return self.alamak.getVelocity()
+    
+    @property
+    def speed(self) -> float:
+        return np.linalg.norm(self.velocity)
 
 class AckermannSteering:
     def __init__(
@@ -23,9 +65,9 @@ class AckermannSteering:
     ):
         self.left_servo = left_servo
         self.right_servo = right_servo
-        self.wheelbase = wheelbase
-        self.track = track
-        self.track_half = self.track / 2
+        self._wheelbase = wheelbase
+        self._track = track
+        self._track_half = self._track / 2
         self._angle = 0
 
     @property
@@ -40,13 +82,18 @@ class AckermannSteering:
 
     def _set_wheel_angles(self, angle_deg: float):
         angle = math.radians(angle_deg)
-        R = self.wheelbase / math.tan(angle)
+        if abs(angle) < 1e-6:
+            self.left_servo.setPosition(0)
+            self.right_servo.setPosition(0)
+            return
+        
+        R = self._wheelbase / math.tan(angle)
         if angle > 0:  # left
-            left_angle = math.atan(self.wheelbase / (R - self.track_half))
-            right_angle = math.atan(self.wheelbase / (R + self.track_half))
+            left_angle = math.atan(self._wheelbase / (R - self._track_half))
+            right_angle = math.atan(self._wheelbase / (R + self._track_half))
         else:
-            left_angle = math.atan(self.wheelbase / (R + self.track_half))
-            right_angle = math.atan(self.wheelbase / (R - self.track_half))
+            left_angle = math.atan(self._wheelbase / (R + self._track_half))
+            right_angle = math.atan(self._wheelbase / (R - self._track_half))
 
         self.left_servo.setPosition(left_angle)
         self.right_servo.setPosition(right_angle)
@@ -79,7 +126,7 @@ class Encoder:
     # ! PositionSensor.enable() only accepts int value in miliseconds.
     RESOLUTION = 4096
 
-    def __init__(self, sensor: PositionSensor, sampling_period_ms: int = 16):
+    def __init__(self, sensor: PositionSensor, sampling_period_ms: int):
         self.sensor = sensor
         self.sensor.enable(sampling_period_ms)
 
@@ -123,3 +170,19 @@ class IMU:
 
     def get_compass(self):
         return self.compass.getValues()
+
+
+class CameraWrapper:
+    def __init__(self, camera: Camera, sampling_period_ms: int):
+        self.camera = camera
+        self.camera.enable(sampling_period_ms)
+        self.width = self.camera.getWidth()
+        self.height = self.camera.getHeight()
+
+    def get_bgr(self):
+        argb = self.camera.getImage()
+        img = np.frombuffer(argb, dtype=np.uint8).reshape((self.height, self.width, 4))
+        return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+    def get_jpeg(self, quality=80) -> tuple[bool, np.ndarray]:
+        return cv2.imencode(".jpg", self.get_bgr(), [cv2.IMWRITE_JPEG_QUALITY, quality])
