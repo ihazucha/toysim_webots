@@ -56,7 +56,7 @@ servo_encoders = []
 
 steps_to_plot = 500
 
-motors.velocity = 30
+motors.velocity = 20
 ackermann.angle = 10
 
 while robot.step(TIME_STEP) != -1:

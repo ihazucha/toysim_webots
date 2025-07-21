@@ -124,7 +124,10 @@ DEF ALAMAK Robot {
       device [
         RotationalMotor {
           name "fl_servo"
-          maxTorque 12
+          maxVelocity 7.48
+          minPosition -0.45
+          maxPosition 0.45
+          maxTorque 1.08
         }
         PositionSensor {
           name "fl_servo_encoder"
@@ -152,7 +155,10 @@ DEF ALAMAK Robot {
       device [
         RotationalMotor {
           name "fr_servo"
-          maxTorque 12
+          maxVelocity 7.48
+          minPosition -0.45
+          maxPosition 0.45
+          maxTorque 1.08
         }
         PositionSensor {
           name "fr_servo_encoder"
