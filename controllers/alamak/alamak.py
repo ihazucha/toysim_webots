@@ -1,7 +1,5 @@
 import numpy as np
-from time import time_ns
 import matplotlib.pyplot as plt
-from threading import Thread
 
 from controller import Supervisor
 from alamaklib import AckermannSteering, AlamakSupervisor, Motors, Encoder, IMU, CameraWrapper
@@ -21,7 +19,8 @@ class VehicleState:
 
 
 robot = Supervisor()
-TIME_STEP = int(robot.getBasicTimeStep())
+# TIME_STEP = int(robot.getBasicTimeStep())
+TIME_STEP = 16
 
 ackermann = AckermannSteering(
     left_servo=robot.getDevice("fl_servo"), right_servo=robot.getDevice("fr_servo")
@@ -42,9 +41,6 @@ imu = IMU(
 camera = CameraWrapper(
     camera=robot.getDevice("rpi_camera_v2"), sampling_period_ms=TIME_STEP
 )
-motors.velocity = 30
-ackermann.angle = 10
-
 alamak_supervisor = AlamakSupervisor(robot)
 
 # Scenarios
@@ -60,6 +56,8 @@ servo_encoders = []
 
 steps_to_plot = 500
 
+motors.velocity = 30
+ackermann.angle = 10
 
 while robot.step(TIME_STEP) != -1:
 
@@ -86,53 +84,63 @@ while robot.step(TIME_STEP) != -1:
         servo_arr = np.array(servo_encoders)
         step_arr = np.arange(len(positions))
 
-        fig, axs = plt.subplots(5, 2, figsize=(14, 18))
+        # Plot all "step" dependent plots in one figure
+        fig, axs = plt.subplots(5, 1, figsize=(10, 14), sharex=True)
 
-        # Left column: step on x-axis
-        axs[0, 0].plot(step_arr, pos_arr[:, 0], label="x")
-        axs[0, 0].plot(step_arr, pos_arr[:, 1], label="y")
-        axs[0, 0].set_title("Position vs Step")
-        axs[0, 0].set_xlabel("Step")
-        axs[0, 0].set_ylabel("Position (m)")
-        axs[0, 0].legend()
+        # Position vs Step
+        axs[0].plot(step_arr, pos_arr[:, 0], label="x")
+        axs[0].plot(step_arr, pos_arr[:, 1], label="y")
+        axs[0].plot(step_arr, pos_arr[:, 2], label="z")
+        axs[0].set_title("Position")
+        axs[0].set_ylabel("Position [m]")
+        axs[0].legend()
+        axs[0].grid(True)
 
-        axs[1, 0].plot(step_arr, ori_arr)
-        axs[1, 0].set_title("Orientation vs Step")
-        axs[1, 0].set_xlabel("Step")
-        axs[1, 0].set_ylabel("Orientation (radians)")
-        axs[1, 0].set_ylim([-np.pi, np.pi])
+        # Orientation vs Step
+        ori_arr_deg = np.rad2deg(ori_arr)
+        axs[1].plot(step_arr, ori_arr_deg[:, 0], label="Roll")
+        axs[1].plot(step_arr, ori_arr_deg[:, 1], label="Pitch")
+        axs[1].plot(step_arr, ori_arr_deg[:, 2], label="Yaw")
+        axs[1].set_title("Orientation")
+        axs[1].set_ylabel("Orientation [rad]")
+        axs[1].set_ylim([-180, 180])
+        axs[1].grid(True)
 
-        axs[2, 0].plot(step_arr, accelerations)
-        axs[2, 0].set_title("Acceleration vs Step")
-        axs[2, 0].set_xlabel("Step")
-        axs[2, 0].set_ylabel("Acceleration (m/s²)")
+        # Acceleration vs Step
+        axs[2].plot(step_arr, accelerations)
+        axs[2].set_title("Acceleration")
+        axs[2].set_ylabel("Acceleration [m/s²]")
+        axs[2].grid(True)
 
-        axs[3, 0].plot(step_arr, speeds)
-        axs[3, 0].set_title("Velocity vs Step")
-        axs[3, 0].set_xlabel("Step")
-        axs[3, 0].set_ylabel("Velocity (m/s)")
+        # Velocity vs Step  
+        axs[3].plot(step_arr, speeds)
+        axs[3].set_title("Velocity")
+        axs[3].set_ylabel("Velocity [m/s]")
+        axs[3].grid(True)
 
-        axs[4, 0].plot(step_arr, servo_arr[:, 0], label="FL Servo Encoder")
-        axs[4, 0].plot(step_arr, servo_arr[:, 1], label="FR Servo Encoder")
-        axs[4, 0].plot(step_arr, np.full_like(step_arr, ackermann.angle), '--', label="Constant 10 deg (rad)")
-        axs[4, 0].set_title("Servo Encoders vs Step")
-        axs[4, 0].set_xlabel("Step")
-        axs[4, 0].set_ylabel("Servo Encoder / Constant (rad)")
-        axs[4, 0].legend()
+        # Servo Encoders vs Step
+        axs[4].plot(step_arr, servo_arr[:, 0], label="Left Wheel")
+        axs[4].plot(step_arr, servo_arr[:, 1], label="Right Wheel")
+        axs[4].plot(step_arr, np.full_like(step_arr, ackermann.angle), '--', label="Target Angle (bicycle model)")
+        axs[4].set_title("Servo Angles")
+        axs[4].set_xlabel("Step")
+        axs[4].set_ylabel("Angle [deg]")
+        axs[4].legend()
+        axs[4].grid(True)
 
-        # Right column: position plots
-        axs[0, 1].plot(pos_arr[:, 0], pos_arr[:, 1])
-        axs[0, 1].set_title("Position (x to y) [m]")
-        axs[0, 1].set_xlabel("x")
-        axs[0, 1].set_ylabel("y")
-        axs[0, 1].axis('equal')
+        plt.tight_layout(rect=[0, 0, 1, 0.97])
+        plt.savefig('C:/Users/ihazu/Desktop/projects/toysim_webots/controllers/alamak/step_plots.png')
 
-        # Hide unused subplots in right column
-        for i in range(1, 5):
-            fig.delaxes(axs[i, 1])
-
+        # Separate position plot (x vs y)
+        plt.figure(figsize=(6, 6))
+        plt.plot(pos_arr[:, 0], pos_arr[:, 1])
+        plt.title("Position (x to y) [m]")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.axis('equal')
+        plt.grid(True)
         plt.tight_layout()
-        plt.savefig('C:/Users/ihazu/Desktop/projects/toysim_webots/controllers/alamak/plot.png')
+        plt.savefig('C:/Users/ihazu/Desktop/projects/toysim_webots/controllers/alamak/xy_plot.png')
         break
         # robot.simulationReset()
         # robot.simulationSetMode(Supervisor.SIMULATION_MODE_FAST)

@@ -4,16 +4,14 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/MattePaint.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/TireRubber.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Rubber.proto"
 
 WorldInfo {
   info [
-    "Description: Examples of four wheels vehicles"
+    "Model Vehicle (NXP Cup Alamak) Digital Twin"
   ]
-  title "Four Wheels"
+  title "Alamak Model Vehicle"
   basicTimeStep 8
-  FPS 120
-  lineScale 0.2
 }
 Viewpoint {
   orientation 0.09075647598369513 -0.5837792794711022 -0.8068240297160353 5.878618643053207
@@ -44,6 +42,8 @@ DEF ALAMAK Robot {
       jointParameters HingeJointParameters {
         axis 0 1 0
         anchor -0.12 0.08 0
+        dampingConstant 0.001
+        staticFriction 0.002
       }
       device [
         PositionSensor {
@@ -52,22 +52,25 @@ DEF ALAMAK Robot {
         }
         RotationalMotor {
           name "rl_motor"
-          maxVelocity 100
+          controlPID 1 0 0.1
+          maxVelocity 285
+          maxTorque 0.2294
         }
       ]
       endPoint Solid {
         translation -0.12000064696667458 0.08000075424238581 -5.762730195466481e-09
-        rotation -0.7707191538696051 0.00015734366194802455 -0.6371749846796343 6.2828110755565625
+        rotation 0 1 0 0
         children [
           DEF ALAMAK_WHEEL_POSE Pose {
             rotation 1 0 0 -1.5707953071795862
             children [
               DEF ALAMAK_WHEEL_SH Shape {
-                appearance TireRubber {
+                appearance Rubber {
                 }
                 geometry DEF ALAMAK_WHEEL_CYL Cylinder {
                   height 0.026
                   radius 0.032
+                  subdivision 64
                 }
               }
             ]
@@ -83,11 +86,15 @@ DEF ALAMAK Robot {
       jointParameters HingeJointParameters {
         axis 0 1 0
         anchor -0.12 -0.08 0
+        dampingConstant 0.001
+        staticFriction 0.002
       }
       device [
         RotationalMotor {
           name "rr_motor"
-          maxVelocity 100
+          controlPID 1 0 0.1
+          maxVelocity 285
+          maxTorque 0.2294
         }
         PositionSensor {
           name "rr_encoder"
@@ -96,7 +103,7 @@ DEF ALAMAK Robot {
       ]
       endPoint Solid {
         translation -0.12000144537206893 -0.08000159518239915 -1.4540245600655905e-06
-        rotation -0.770721298305927 0.00015733431760616245 -0.6371723907888186 6.282811097415651
+        rotation 0 1 0 0
         children [
           USE ALAMAK_WHEEL_POSE
         ]
