@@ -28,7 +28,7 @@ RectangleArena {
   floorTileSize 2 2
 }
 DEF ALAMAK Robot {
-  translation 0 0 0.032
+  translation 0 0 0.031
   children [
     DEF ALAMAK_BODY_SH Shape {
       appearance MattePaint {
@@ -58,7 +58,7 @@ DEF ALAMAK Robot {
         }
       ]
       endPoint Solid {
-        translation -0.12000064696667458 0.08000075424238581 -5.762730195466481e-09
+        translation -0.12000064696667458 0.08000075424238581 -5.762730201246555e-09
         rotation 0 1 0 0
         children [
           DEF ALAMAK_WHEEL_POSE Pose {
@@ -102,7 +102,7 @@ DEF ALAMAK Robot {
         }
       ]
       endPoint Solid {
-        translation -0.12000144537206893 -0.08000159518239915 -1.4540245600655905e-06
+        translation -0.12000144537206893 -0.08000159518239915 -1.4540245600688463e-06
         rotation 0 1 0 0
         children [
           USE ALAMAK_WHEEL_POSE
@@ -134,7 +134,7 @@ DEF ALAMAK Robot {
         }
       ]
       endPoint Solid {
-        translation 0.06500092337164304 0.08000155513982896 9.557792592895883e-07
+        translation 0.06500092337164304 0.08000155513982896 9.557792592957768e-07
         children [
           USE ALAMAK_WHEEL_POSE
         ]
@@ -165,7 +165,7 @@ DEF ALAMAK Robot {
         }
       ]
       endPoint Solid {
-        translation 0.06499964028409694 -0.0800008969279732 1.1203611734243677e-06
+        translation 0.06499964028409694 -0.0800008969279732 1.1203611734259047e-06
         children [
           USE ALAMAK_WHEEL_POSE
         ]
@@ -179,6 +179,7 @@ DEF ALAMAK Robot {
       name "imu_gyro"
     }
     Accelerometer {
+      translation -0.03 0 0.05
       name "imu_accel"
     }
     Compass {

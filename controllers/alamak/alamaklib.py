@@ -1,9 +1,7 @@
 import math
 import numpy as np
 import cv2
-from typing import List
 from scipy.spatial.transform import Rotation
-
 
 from controller import (
     Supervisor,
@@ -15,10 +13,30 @@ from controller import (
     Camera,
 )
 
+from dataclasses import dataclass
 
+@dataclass
+class VehicleState:
+    acceleration = 0.0
+    velocity = 0.0
+    position = np.zeros(3)
+    orientation = np.zeros(3)
+    target_steering_angle = 0.0
+    left_wheel_steering_angle = 0.0
+    right_wheel_steering_angle = 0.0
+    front_wheel_speeds = np.zeros(2)
+    rear_wheel_speeds = np.zeros(2)
+
+@dataclass
 class AlamakParams:
     WHEELBASE = 0.185
     TRACK = 0.155
+
+
+def transform_to_world_frame(vec, rotation_euler):
+    rot = Rotation.from_euler('xyz', rotation_euler)
+    world_vector = rot.apply(vec)
+    return world_vector
 
 class AlamakSupervisor:
     def __init__(self, supervisor: Supervisor):
@@ -29,31 +47,37 @@ class AlamakSupervisor:
 
     def __str__(self):
         pos = self.position
-        rot = self.rotation
+        rot = self.rotation_euler_angles
         vel = self.velocity
-        return f"T [m] {pos[0]:6.2f}, {pos[1]:6.2f}, {pos[2]:6.2f} | " \
-               f"R [rad] {rot[0]:5.2f}, {rot[1]:5.2f}, {rot[2]:5.2f} | " \
-               f"V [m/s] {vel[0]:6.2f}, {vel[1]:6.2f}, {vel[2]:6.2f} | " \
-               f"v [m/s] {self.speed:6.2f}"
+        return (
+            f"T [m] {pos[0]:6.2f}, {pos[1]:6.2f}, {pos[2]:6.2f} | "
+            f"R [rad] {rot[0]:5.2f}, {rot[1]:5.2f}, {rot[2]:5.2f} | "
+            f"V [m/s] {vel[0]:6.2f}, {vel[1]:6.2f}, {vel[2]:6.2f} | "
+            f"v [m/s] {self.speed:6.2f}"
+        )
 
     @property
-    def position(self) -> List[float]:
-        return self.alamak.getPosition()
-    
+    def position(self) -> np.ndarray[3, float]:
+        return np.array(self.alamak.getPosition())
+
     @property
-    def rotation(self) -> List[float]:
+    def rotation_euler_angles(self) -> np.ndarray[3, float]:
         rot_matrix = np.array(self.alamak.getOrientation()).reshape(3, 3)
-        euler = Rotation.from_matrix(rot_matrix).as_euler('xyz', degrees=False)
-        return euler.tolist()
-    
+        euler = Rotation.from_matrix(rot_matrix).as_euler("xyz", degrees=False)
+        return np.array(euler.tolist())
 
     @property
-    def velocity(self) -> List[float]:
-        return self.alamak.getVelocity()
-    
+    def velocity(self) -> np.ndarray[6, float]:
+        """Linear and Angular velocity"""
+        return np.array(self.alamak.getVelocity())
+
     @property
     def speed(self) -> float:
-        return np.linalg.norm(self.velocity)
+        return np.linalg.norm(self.velocity[:3])
+
+    @property
+    def angular_speed(self) -> float:
+        return np.linalg.norm(self.velocity[3:])
 
 class AckermannSteering:
     def __init__(
@@ -86,7 +110,7 @@ class AckermannSteering:
             self.left_servo.setPosition(0)
             self.right_servo.setPosition(0)
             return
-        
+
         R = self._wheelbase / math.tan(angle)
         if angle > 0:  # left
             left_angle = math.atan(self._wheelbase / (R - self._track_half))
