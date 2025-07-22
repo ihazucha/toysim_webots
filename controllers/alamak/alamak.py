@@ -125,8 +125,8 @@ while robot.step(TIME_STEP) != -1:
             ax.grid(True)
 
         def accel_plt(ax):
-            ax.plot(steps, accels_norm, label="Ground Truth")
-            ax.plot(steps, accels_norm_imu, label="Accelerometer")
+            ax.plot(steps, accels_norm, label="Ground Truth", color='#ff7f0e')
+            ax.plot(steps, accels_norm_imu, '--', label="Accelerometer", color='#ff7f0e')
             ax.set_title("Acceleration")
             ax.set_ylabel("Acceleration [m/s^2]")
             ax.legend()
