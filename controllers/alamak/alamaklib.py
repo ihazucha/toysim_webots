@@ -2,6 +2,7 @@ import math
 import numpy as np
 import cv2
 from scipy.spatial.transform import Rotation
+from typing import Tuple
 
 from controller import (
     Supervisor,
@@ -37,6 +38,34 @@ def transform_to_world_frame(vec, rotation_euler):
     rot = Rotation.from_euler('xyz', rotation_euler)
     world_vector = rot.apply(vec)
     return world_vector
+
+def decompose_acceleration(
+    v: np.ndarray, a: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Decompose acceleration into tangential and normal components
+
+    Args:
+        v: Velocity [vx, vy, vz]
+        a: Acceleration [ax, ay, az]
+
+    Returns:
+        a_tangential: change of speed
+        a_normal: change of direction (centripetal)
+    """
+
+    speed = np.linalg.norm(v)
+
+    if speed < 1e-6:
+        return np.zeros(3), np.zeros(3)
+
+    v_dir = v / speed
+
+    a_tangential = np.dot(a, v_dir) * v_dir
+    a_normal = a - a_tangential
+
+    return a_tangential, a_normal
+
 
 class AlamakSupervisor:
     def __init__(self, supervisor: Supervisor):

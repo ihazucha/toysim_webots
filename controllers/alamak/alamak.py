@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from dataclasses import dataclass
 
 from controller import Supervisor
 from alamaklib import (
@@ -9,8 +10,12 @@ from alamaklib import (
     Encoder,
     IMU,
     CameraWrapper,
-    transform_to_world_frame
+    transform_to_world_frame,
+    decompose_acceleration,
 )
+
+# Setup
+# -----------------------------------------------------------------------------
 
 robot = Supervisor()
 sup = AlamakSupervisor(robot)
@@ -38,10 +43,49 @@ imu = IMU(
 # 2. Circle
 # 3. Figure 8
 
+# Data
+# -----------------------------------------------------------------------------    
+
+@dataclass
+class AlamakDataGT:
+    """
+    Alamak vehicle Groud Truth data (obtained by a supevisor).
+    """
+    timestamps = []
+    a = []
+    a_xyz = []
+    a_xyz_tangential = []
+    a_xyz_normal = []
+    v_xyz = []
+    speed = []
+    position_xyz = []
+    rotation_xyz = []
+
+@dataclass
+class AlamakData:
+    """
+    Alamak vehicle Measured/Estimated data (obtained by sensors) 
+    """
+    timestamps = []
+    a_xyz_imu = []
+    a_xyz_tangential_imu = []
+    a_xyz_normal_imu = []
+    v_xyz_imu = []
+    speed_imu = []
+    position_xyz = []
+    rotation_xyz = []
+    wheel_steering_angles = []
+    steering_angle_estimate = []
+
 accels = []
 accels_imu = []
 accels_norm = []
 accels_norm_imu = []
+# Decomposed accelerations
+tangential_acc = []
+normal_acc = []
+tangential_acc_imu = []
+normal_acc_imu = []
 
 velocities = []
 velocities_imu = []
@@ -59,8 +103,8 @@ wheel_steering_angles = []
 steering_angles_estimated = []
 
 STEPS_TO_PLOT = 1000
-TARGET_VELOCITY = 20 # [rad/s]
-TARGET_STEERING_ANGLE = 10 # deg
+TARGET_VELOCITY = 20  # [rad/s]
+TARGET_STEERING_ANGLE = 10  # deg
 
 step = 0
 motors.velocity = TARGET_VELOCITY
@@ -68,15 +112,21 @@ ackermann.angle = TARGET_STEERING_ANGLE
 
 while robot.step(TIME_STEP) != -1:
     # Ground truth
-    V = sup.velocity
-    velocities.append(V)
+    velocities.append(sup.velocity[:3])
     speeds.append(sup.speed)
     positions.append(sup.position)
     rotations.append(sup.rotation_euler_angles)
-    wheel_steering_angles.append((fl_servo_encoder.value_deg, fr_servo_encoder.value_deg))
-    a = (velocities[step][:3] - velocities[step - 1][:3]) / TIME_STEP_SEC if step > 0 else np.zeros(3)
+    wheel_steering_angles.append(
+        (fl_servo_encoder.value_deg, fr_servo_encoder.value_deg)
+    )
+    a = (
+        (velocities[step] - velocities[step - 1]) / TIME_STEP_SEC
+        if step > 0
+        else np.zeros(3)
+    )
     accels.append(a)
-    a_norm = (speeds[step] - speeds[step - 1]) / TIME_STEP_SEC if step > 0 else 0.0
+    # a_norm = (speeds[step] - speeds[step - 1]) / TIME_STEP_SEC if step > 0 else 0.0
+    a_norm = np.linalg.norm(a)
     accels_norm.append(a_norm)
 
     # Measured/Estimated
@@ -84,8 +134,8 @@ while robot.step(TIME_STEP) != -1:
     accel[2] -= 9.81  # Remove gravity component
     accel_world = transform_to_world_frame(accel, sup.rotation_euler_angles)
     accels_imu.append(accel_world)
-    accels_norm_imu.append(np.linalg.norm(accel_world[:2]))
-    
+    accels_norm_imu.append(np.linalg.norm(accel_world))
+
     # Estimate velocity by integrating acceleration
     if step == 0:
         velocities_imu.append(np.zeros(3))
@@ -93,6 +143,22 @@ while robot.step(TIME_STEP) != -1:
         prev_vel = velocities_imu[step - 1]
         vel_estimated = prev_vel + np.array(accels_imu[step]) * TIME_STEP_SEC
         velocities_imu.append(vel_estimated)
+
+    if step > 0:
+        tang, norm = decompose_acceleration(velocities[step], accels[step])
+        tangential_acc.append(tang)
+        normal_acc.append(norm)
+
+        tang_imu, norm_imu = decompose_acceleration(
+            velocities_imu[step], accels_imu[step]
+        )
+        tangential_acc_imu.append(tang_imu)
+        normal_acc_imu.append(norm_imu)
+    else:
+        tangential_acc.append(np.zeros(3))
+        normal_acc.append(np.zeros(3))
+        tangential_acc_imu.append(np.zeros(3))
+        normal_acc_imu.append(np.zeros(3))
 
     if step == STEPS_TO_PLOT:
         accels = np.array(accels)
@@ -105,9 +171,9 @@ while robot.step(TIME_STEP) != -1:
         steps = np.arange(len(positions))
 
         def position_plt(ax):
-            ax.plot(steps, positions[:, 0], label="x", color='#d62728')
-            ax.plot(steps, positions[:, 1], label="y", color='#2ca02c')
-            ax.plot(steps, positions[:, 2], label="z", color='#1f77b4')
+            ax.plot(steps, positions[:, 0], label="x", color="#d62728")
+            ax.plot(steps, positions[:, 1], label="y", color="#2ca02c")
+            ax.plot(steps, positions[:, 2], label="z", color="#1f77b4")
             ax.set_title("Position")
             ax.set_ylabel("Position [m]")
             ax.legend()
@@ -115,9 +181,9 @@ while robot.step(TIME_STEP) != -1:
 
         def rotation_plt(ax):
             rot_arr_deg = np.rad2deg(rotations)
-            ax.plot(steps, rot_arr_deg[:, 0], label="Roll", color='#d62728')
-            ax.plot(steps, rot_arr_deg[:, 1], label="Pitch", color='#2ca02c')
-            ax.plot(steps, rot_arr_deg[:, 2], label="Yaw", color='#1f77b4')
+            ax.plot(steps, rot_arr_deg[:, 0], label="Roll", color="#d62728")
+            ax.plot(steps, rot_arr_deg[:, 1], label="Pitch", color="#2ca02c")
+            ax.plot(steps, rot_arr_deg[:, 2], label="Yaw", color="#1f77b4")
             ax.set_title("Orientation")
             ax.set_ylabel("Orientation [deg]")
             ax.set_ylim([-180, 180])
@@ -125,23 +191,25 @@ while robot.step(TIME_STEP) != -1:
             ax.grid(True)
 
         def accel_plt(ax):
-            ax.plot(steps, accels_norm, label="Ground Truth", color='#ff7f0e')
-            ax.plot(steps, accels_norm_imu, '--', label="Accelerometer", color='#ff7f0e')
+            ax.plot(steps, accels_norm, label="Ground Truth", color="#ff7f0e")
+            ax.plot(
+                steps, accels_norm_imu, "--", label="Accelerometer", color="#ff7f0e"
+            )
             ax.set_title("Acceleration")
             ax.set_ylabel("Acceleration [m/s^2]")
             ax.legend()
             ax.grid(True)
 
         def accels_plt(ax):
-            ax.plot(steps, accels[:, 0], label="x", color='#d62728')
-            ax.plot(steps, accels[:, 1], label="y", color='#2ca02c')
-            ax.plot(steps, accels[:, 2], label="z", color='#1f77b4')
-            ax.plot(steps, accels_imu[:, 0], "--", label="x", color='#d62728')
-            ax.plot(steps, accels_imu[:, 1], "--", label="y", color='#2ca02c')
-            ax.plot(steps, accels_imu[:, 2], "--", label="z", color='#1f77b4')
+            ax.plot(steps, accels[:, 0], label="x", color="#d62728")
+            ax.plot(steps, accels[:, 1], label="y", color="#2ca02c")
+            ax.plot(steps, accels[:, 2], label="z", color="#1f77b4")
+            ax.plot(steps, accels_imu[:, 0], "--", label="x", color="#d62728")
+            ax.plot(steps, accels_imu[:, 1], "--", label="y", color="#2ca02c")
+            ax.plot(steps, accels_imu[:, 2], "--", label="z", color="#1f77b4")
             ax.set_title("Accelerations (x, y, z)")
             ax.set_ylabel("Acceleration  [m/s^2]")
-            ax.legend(bbox_to_anchor=(1.01, 1.05), loc='upper left')
+            ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
             ax.grid(True)
 
         def speed_plt(ax):
@@ -165,15 +233,34 @@ while robot.step(TIME_STEP) != -1:
             ax.grid(True)
 
         def velocities_plt(ax):
-            ax.plot(steps, velocities[:, 0], label="x", color='#d62728')
-            ax.plot(steps, velocities[:, 1], label="y", color='#2ca02c')
-            ax.plot(steps, velocities[:, 2], label="z", color='#1f77b4')
-            ax.plot(steps, velocities_imu[:, 0], '--', label="x", color='#d62728')
-            ax.plot(steps, velocities_imu[:, 1], '--', label="y", color='#2ca02c')
-            ax.plot(steps, velocities_imu[:, 2], '--', label="z", color='#1f77b4')
+            ax.plot(steps, velocities[:, 0], label="x", color="#d62728")
+            ax.plot(steps, velocities[:, 1], label="y", color="#2ca02c")
+            ax.plot(steps, velocities[:, 2], label="z", color="#1f77b4")
+            ax.plot(steps, velocities_imu[:, 0], "--", label="x", color="#d62728")
+            ax.plot(steps, velocities_imu[:, 1], "--", label="y", color="#2ca02c")
+            ax.plot(steps, velocities_imu[:, 2], "--", label="z", color="#1f77b4")
             ax.set_title("Velocities (x y z)")
             ax.set_ylabel("Velocity [m/s]")
-            ax.legend(bbox_to_anchor=(1.01, 1.05), loc='upper left')
+            ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+            ax.grid(True)
+
+        def decomposed_acceleration_plt(ax):
+            # Magnitudes of tangential and normal accelerations
+            tang_mag = [np.linalg.norm(a) for a in tangential_acc]
+            norm_mag = [np.linalg.norm(a) for a in normal_acc]
+            tang_mag_imu = [np.linalg.norm(a) for a in tangential_acc_imu]
+            norm_mag_imu = [np.linalg.norm(a) for a in normal_acc_imu]
+
+            ax.plot(steps, tang_mag, label="Tangential (speed change)", color="#d62728")
+            ax.plot(steps, norm_mag, label="Normal (centripetal)", color="#2ca02c")
+            ax.plot(
+                steps, tang_mag_imu, "--", label="Tangential (IMU)", color="#d62728"
+            )
+            ax.plot(steps, norm_mag_imu, "--", label="Normal (IMU)", color="#2ca02c")
+
+            ax.set_title("Decomposed Acceleration")
+            ax.set_ylabel("Acceleration [m/s²]")
+            ax.legend()
             ax.grid(True)
 
         time_plts = [
@@ -181,17 +268,19 @@ while robot.step(TIME_STEP) != -1:
             speed_plt,
             accels_plt,
             velocities_plt,
+            decomposed_acceleration_plt,
             position_plt,
             steering_plt,
             rotation_plt,
         ]
 
-        plt.figure(figsize=(12, 8))
-        plt.tight_layout(rect=[0, 0, 1, 0.97])
-        
-        fig, axs = plt.subplots(len(time_plts), 1, figsize=(10, 14), sharex=True)
+        plt.figure()
+
+        fig, axs = plt.subplots(
+            len(time_plts), 1, figsize=(10, len(time_plts) * 2), sharex=True
+        )
         axs[-1].set_xlabel("Step")
-        
+
         for i in range(len(time_plts)):
             time_plts[i](axs[i])
 
