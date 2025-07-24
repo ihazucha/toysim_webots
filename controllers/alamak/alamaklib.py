@@ -17,18 +17,6 @@ from controller import (
 from dataclasses import dataclass
 
 @dataclass
-class VehicleState:
-    acceleration = 0.0
-    velocity = 0.0
-    position = np.zeros(3)
-    orientation = np.zeros(3)
-    target_steering_angle = 0.0
-    left_wheel_steering_angle = 0.0
-    right_wheel_steering_angle = 0.0
-    front_wheel_speeds = np.zeros(2)
-    rear_wheel_speeds = np.zeros(2)
-
-@dataclass
 class AlamakParams:
     WHEELBASE = 0.185
     TRACK = 0.155
@@ -41,7 +29,7 @@ def transform_to_world_frame(vec, rotation_euler):
 
 def decompose_acceleration(
     v: np.ndarray, a: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[float, float]:
     """
     Decompose acceleration into tangential and normal components
 
@@ -57,14 +45,14 @@ def decompose_acceleration(
     speed = np.linalg.norm(v)
 
     if speed < 1e-6:
-        return np.zeros(3), np.zeros(3)
+        return 0.0, 0.0
 
     v_dir = v / speed
 
     a_tangential = np.dot(a, v_dir) * v_dir
     a_normal = a - a_tangential
 
-    return a_tangential, a_normal
+    return (np.linalg.norm(a_tangential), np.linalg.norm(a_normal))
 
 
 class AlamakSupervisor:
@@ -215,11 +203,19 @@ class IMU:
         self.accel.enable(sampling_period_ms)
         self.compass.enable(sampling_period_ms)
 
-    def get_gyro(self):
+    def get_euler_angles(self):
         return self.gyro.getRollPitchYaw()
 
-    def get_accel(self):
+    def get_quaternion(self):
+        return self.gyro.getQuaternion()
+
+    def get_acceleration(self):
         return self.accel.getValues()
+
+    def get_linear_acceleration(self):
+        a = self.accel.getValues()
+        a[2] -= 9.81
+        return a
 
     def get_compass(self):
         return self.compass.getValues()
