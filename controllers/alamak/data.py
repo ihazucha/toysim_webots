@@ -58,4 +58,5 @@ class AlamakData(DataSerializable):
     speed_encoders: list = field(default_factory=list)
     position_xyz_imu: list = field(default_factory=list)
     rotation_xyz_imu: list = field(default_factory=list)
+    angular_v_xyz_imu: list = field(default_factory=list)
     steering_angle_estimate: list = field(default_factory=list)

@@ -136,8 +136,9 @@ while robot.step(TIME_STEP) != -1:
     speed_rr_encoder = rr_speedometer.get_speed(angle=rr_encoder.value_rad, dt=TIME_STEP_SEC)
     speed_encoders = (speed_rl_encoder + speed_rr_encoder) / 2
     data.speed_encoders.append(speed_encoders)
-    yaw_rate = imu.get_angular_velocity()[2]
-    steering_angle_estimate = estimate_steering_angle_deg(speed=speed_encoders, yaw_rate=yaw_rate)
+    angular_v_xyz = imu.get_angular_velocity()
+    data.angular_v_xyz_imu.append(angular_v_xyz)
+    steering_angle_estimate = estimate_steering_angle_deg(speed=speed_encoders, yaw_rate=angular_v_xyz[2])
     data.steering_angle_estimate.append(steering_angle_estimate)
 
     if step == STEPS_TO_PLOT:

@@ -25,6 +25,7 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
     a_xyz_imu = np.array(data.a_xyz_imu)
     wheel_steering_angles = np.array(data_gt.wheel_steering_angles)
     v_xyz_imu = np.array(data.v_xyz_imu)
+    angular_v_xyz_imu = np.array(data.angular_v_xyz_imu)
 
     def position_plt(ax):
         ax.plot(steps, position_xyz[:, 0], label="x", color="#d62728")
@@ -96,8 +97,17 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.plot(steps, v_xyz_imu[:, 0], "--", label="x (IMU)", color="#d62728")
         ax.plot(steps, v_xyz_imu[:, 1], "--", label="y (IMU)", color="#2ca02c")
         ax.plot(steps, v_xyz_imu[:, 2], "--", label="z (IMU)", color="#1f77b4")
-        ax.set_title("Velocities (x y z)")
+        ax.set_title("Velocities (x, y, z)")
         ax.set_ylabel("Velocity [m/s]")
+        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.grid(True)
+
+    def angular_velocities_plt(ax):
+        ax.plot(steps, angular_v_xyz_imu[:, 0], label="x", color="#d62728")
+        ax.plot(steps, angular_v_xyz_imu[:, 1], label="y", color="#2ca02c")
+        ax.plot(steps, angular_v_xyz_imu[:, 2], label="z", color="#1f77b4")
+        ax.set_title("Angular Velocities (x, y, z)")
+        ax.set_ylabel("Velocity [rad/s]")
         ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
         ax.grid(True)
 
@@ -116,6 +126,7 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         speed_plt,
         accels_plt,
         velocities_plt,
+        angular_velocities_plt,
         position_plt,
         rotation_plt,
         steering_plt,
