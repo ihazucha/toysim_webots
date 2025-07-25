@@ -165,7 +165,7 @@ DEF ALAMAK Robot {
         }
       ]
       endPoint Solid {
-        translation 0.06499964028409694 -0.0800008969279732 1.1203611734259047e-06
+        translation 0.0649996402841024 -0.0800008969279732 1.1203611751784467e-06
         children [
           USE ALAMAK_WHEEL_POSE
         ]
@@ -175,14 +175,21 @@ DEF ALAMAK Robot {
         }
       }
     }
-    InertialUnit {
+    Gyro {
+      translation -0.03 0 0.05
       name "imu_gyro"
+    }
+    InertialUnit {
+      translation -0.03 0 0.05
+      name "imu_inertial_unit"
     }
     Accelerometer {
       translation -0.03 0 0.05
       name "imu_accel"
+      resolution 0.0383
     }
     Compass {
+      translation -0.03 0 0.05
       name "imu_compass"
     }
     Camera {

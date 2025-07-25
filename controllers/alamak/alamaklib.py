@@ -8,28 +8,24 @@ from controller import (
     Supervisor,
     Accelerometer,
     InertialUnit,
+    Gyro,
     Compass,
     PositionSensor,
     Motor,
     Camera,
 )
+from data import AlamakParams
 
-from dataclasses import dataclass
+# Functions
+# -------------------------------------------------------------------------------------------------
 
-@dataclass
-class AlamakParams:
-    WHEELBASE = 0.185
-    TRACK = 0.155
-
-
-def transform_to_world_frame(vec, rotation_euler):
-    rot = Rotation.from_euler('xyz', rotation_euler)
+def rotate_to_world_frame(vec, rotation_euler):
+    rot = Rotation.from_euler("xyz", rotation_euler)
     world_vector = rot.apply(vec)
     return world_vector
 
-def decompose_acceleration(
-    v: np.ndarray, a: np.ndarray
-) -> Tuple[float, float]:
+
+def decompose_acceleration(v: np.ndarray, a: np.ndarray) -> Tuple[float, float]:
     """
     Decompose acceleration into tangential and normal components
 
@@ -54,6 +50,30 @@ def decompose_acceleration(
 
     return (np.linalg.norm(a_tangential), np.linalg.norm(a_normal))
 
+def estimate_steering_angle_deg(speed, yaw_rate, wheelbase=AlamakParams.WHEELBASE):
+    """
+    Bicycle model Steering Angle estimate
+    
+    Args:
+        speed: Vehicle speed [m/s]
+        yaw_rate: Vehicle yaw rate [rad/s]
+        wheelbase: Distance between front and rear axles [m]
+        
+    Returns:
+        Estimated steering angle in degrees
+    """
+    if abs(speed) < 0.1:
+        return 0.0
+        
+    # Bicycle model: tan(δ) = (L * ω) / v
+    # where: δ = steering angle, L = wheelbase, ω = yaw rate, v = speed
+    steering_angle_rad = np.arctan2(wheelbase * yaw_rate, speed)
+    
+    # Convert to degrees
+    return np.degrees(steering_angle_rad)
+
+# Alamak Webots wrappers
+# -------------------------------------------------------------------------------------------------
 
 class AlamakSupervisor:
     def __init__(self, supervisor: Supervisor):
@@ -95,6 +115,7 @@ class AlamakSupervisor:
     @property
     def angular_speed(self) -> float:
         return np.linalg.norm(self.velocity[3:])
+
 
 class AckermannSteering:
     def __init__(
@@ -152,9 +173,7 @@ class Motors:
 
     @velocity.setter
     def velocity(self, velocity: float):
-        p, v = (
-            (float("inf"), velocity) if velocity >= 0.0 else (float("-inf"), -velocity)
-        )
+        p, v = (float("inf"), velocity) if velocity >= 0.0 else (float("-inf"), -velocity)
         for m in (self.left, self.right):
             m.setPosition(p)
             m.setVelocity(v)
@@ -190,35 +209,44 @@ class Encoder:
 class IMU:
     def __init__(
         self,
-        gyro: InertialUnit,
+        gyro: Gyro,
+        inertial_unit: InertialUnit,
         accel: Accelerometer,
         compass: Compass,
-        sampling_period_ms: int = 16,
+        sampling_period_ms: int,
     ):
         self.gyro = gyro
-        self.accel = accel
-        self.compass = compass
-
         self.gyro.enable(sampling_period_ms)
+        
+        self.inertial_unit = inertial_unit
+        self.inertial_unit.enable(sampling_period_ms)
+        
+        self.accel = accel
         self.accel.enable(sampling_period_ms)
+        
+        self.compass = compass
         self.compass.enable(sampling_period_ms)
 
-    def get_euler_angles(self):
-        return self.gyro.getRollPitchYaw()
 
-    def get_quaternion(self):
-        return self.gyro.getQuaternion()
+    def get_angular_velocity(self) -> np.ndarray[3, float]:
+        return np.array(self.gyro.getValues())
 
-    def get_acceleration(self):
-        return self.accel.getValues()
+    def get_euler_angles(self) -> np.ndarray[3, float]:
+        return np.array(self.inertial_unit.getRollPitchYaw())
 
-    def get_linear_acceleration(self):
+    def get_quaternion(self) -> np.ndarray[3, float]:
+        return np.array(self.inertial_unit.getQuaternion())
+
+    def get_acceleration(self) -> np.ndarray[3, float]:
+        return np.array(self.accel.getValues())
+
+    def get_linear_acceleration(self) -> np.ndarray[3, float]:
         a = self.accel.getValues()
         a[2] -= 9.81
-        return a
+        return np.array(a)
 
-    def get_compass(self):
-        return self.compass.getValues()
+    def get_compass(self) -> np.ndarray[3, float]:
+        return np.array(self.compass.getValues())
 
 
 class CameraWrapper:
