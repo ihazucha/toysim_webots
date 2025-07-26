@@ -12,6 +12,12 @@ WorldInfo {
   ]
   title "Alamak Model Vehicle"
   basicTimeStep 8
+  FPS 45
+  contactProperties [
+    ContactProperties {
+      material1 "wheel_rubber"
+    }
+  ]
 }
 Viewpoint {
   orientation 0.09075647598369513 -0.5837792794711022 -0.8068240297160353 5.878618643053207
@@ -77,8 +83,11 @@ DEF ALAMAK Robot {
           }
         ]
         name "alamak_rl_wheel"
+        contactMaterial "wheel_rubber"
         boundingObject USE ALAMAK_WHEEL_POSE
-        physics Physics {
+        physics DEF ALAMAK_WHEEL_PHYSICS Physics {
+          density -1
+          mass 0.05
         }
       }
     }
@@ -108,9 +117,9 @@ DEF ALAMAK Robot {
           USE ALAMAK_WHEEL_POSE
         ]
         name "alamak_rr_wheel"
+        contactMaterial "wheel_rubber"
         boundingObject USE ALAMAK_WHEEL_POSE
-        physics Physics {
-        }
+        physics USE ALAMAK_WHEEL_PHYSICS
       }
     }
     DEF ALAMAK_FL_WHEEL Hinge2Joint {
@@ -139,9 +148,9 @@ DEF ALAMAK Robot {
           USE ALAMAK_WHEEL_POSE
         ]
         name "alamak_fl_wheel"
+        contactMaterial "wheel_rubber"
         boundingObject USE ALAMAK_WHEEL_POSE
-        physics Physics {
-        }
+        physics USE ALAMAK_WHEEL_PHYSICS
       }
     }
     DEF ALAMAK_FR_WHEEL Hinge2Joint {
@@ -170,13 +179,13 @@ DEF ALAMAK Robot {
           USE ALAMAK_WHEEL_POSE
         ]
         name "alamak_fr_wheel"
+        contactMaterial "wheel_rubber"
         boundingObject USE ALAMAK_WHEEL_POSE
-        physics Physics {
-        }
+        physics USE ALAMAK_WHEEL_PHYSICS
       }
     }
     Gyro {
-      translation -0.03 0 0.05
+      translation -0.0275 0 0
       name "imu_gyro"
     }
     InertialUnit {
@@ -280,7 +289,7 @@ DEF ALAMAK Robot {
     density -1
     mass 4
     centerOfMass [
-      -0.03 0 0.05
+      -0.0275 0 0
     ]
   }
   controller "alamak"

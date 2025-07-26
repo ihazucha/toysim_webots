@@ -60,7 +60,7 @@ def estimate_steering_angle_deg(speed, yaw_rate, wheelbase=AlamakParams.WHEELBAS
         wheelbase: Distance between front and rear axles [m]
         
     Returns:
-        Estimated steering angle in degrees
+        Estimated Steering Angle in degrees
     """
     if abs(speed) < 0.1:
         return 0.0

@@ -101,6 +101,9 @@ class LowPassFilter:
 yaw_rate_filter = LowPassFilter(alpha=0.55)
 
 while robot.step(TIME_STEP) != -1:
+    # Smooth steering angle as a function of step
+    # ackermann.angle = TARGET_STEERING_ANGLE * np.sin(step * 0.01)
+
     data.target_steering_angle.append(ackermann.angle)
     data.target_speed.append(motors.velocity)
 
@@ -108,34 +111,51 @@ while robot.step(TIME_STEP) != -1:
     v_xyz = sup.velocity[:3]
     data_gt.v_xyz.append(v_xyz)
     data_gt.speed.append(sup.speed)
+    
     a_xyz = (data_gt.v_xyz[step] - data_gt.v_xyz[step - 1]) / TIME_STEP_SEC
     data_gt.a_xyz.append(a_xyz)
     data_gt.a.append(np.linalg.norm(a_xyz))
+
     a_tangential, a_normal = decompose_acceleration(v_xyz, a_xyz)
     data_gt.a_tangential.append(a_tangential)
     data_gt.a_normal.append(a_normal)
+    
     data_gt.position_xyz.append(sup.position)
     data_gt.rotation_xyz.append(sup.rotation_euler_angles)
-    data_gt.wheel_steering_angles.append((fl_servo_encoder.value_deg, fr_servo_encoder.value_deg))
+    fl_angle = fl_servo_encoder.value_deg
+    fr_angle = fr_servo_encoder.value_deg
+    
+    # Convert from 0-360 to -180 to 180
+    if fl_angle > 180:
+        fl_angle -= 360
+    if fr_angle > 180:
+        fr_angle -= 360
+    
+    data_gt.wheel_steering_angles.append((fl_angle, fr_angle))
 
     # Estimated
-    a_xyz_imu_local_frame = imu.get_linear_acceleration()
     rotation_xyz_imu = imu.get_euler_angles()
     data.rotation_xyz_imu.append(rotation_xyz_imu)
-    a_xyz_imu = rotate_to_world_frame(a_xyz_imu_local_frame, sup.rotation_euler_angles)
+    
+    a_xyz_imu_local_frame = imu.get_linear_acceleration()
+    a_xyz_imu = rotate_to_world_frame(a_xyz_imu_local_frame, rotation_xyz_imu)
     data.a_xyz_imu.append(a_xyz_imu)
     data.a_imu.append(np.linalg.norm(a_xyz_imu))
+
     v_xyz_imu = np.zeros(3) if step == 0 else data.v_xyz_imu[step - 1] + a_xyz_imu * TIME_STEP_SEC
     data.v_xyz_imu.append(v_xyz_imu)
     a_tang_imu, a_norm_imu = decompose_acceleration(v_xyz_imu, a_xyz_imu)
     data.a_tangential_imu.append(a_tang_imu)
     data.a_normal_imu.append(a_norm_imu)
+    
     speed_imu = 0.0 if step == 0 else data.speed_imu[step - 1] + a_tang_imu * TIME_STEP_SEC
     data.speed_imu.append(speed_imu)
     speed_rl_encoder = rl_speedometer.get_speed(angle=rl_encoder.value_rad, dt=TIME_STEP_SEC)
     speed_rr_encoder = rr_speedometer.get_speed(angle=rr_encoder.value_rad, dt=TIME_STEP_SEC)
     speed_encoders = (speed_rl_encoder + speed_rr_encoder) / 2
     data.speed_encoders.append(speed_encoders)
+    data.speed_wheels.append((speed_rl_encoder, speed_rr_encoder))
+    
     angular_v_xyz = imu.get_angular_velocity()
     data.angular_v_xyz_imu.append(angular_v_xyz)
     steering_angle_estimate = estimate_steering_angle_deg(speed=speed_encoders, yaw_rate=angular_v_xyz[2])
