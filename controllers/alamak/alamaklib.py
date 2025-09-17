@@ -72,6 +72,27 @@ def estimate_steering_angle_deg(speed, yaw_rate, wheelbase=AlamakParams.WHEELBAS
     # Convert to degrees
     return np.degrees(steering_angle_rad)
 
+# Helpers
+# -------------------------------------------------------------------------------------------------
+
+class Speedometer:
+    """Calculates vehicle speed from encoders"""
+
+    def __init__(self, wheel_radius: float, init_angle: float):
+        self._wheel_radius = wheel_radius
+        self._last_angle = init_angle
+
+    @staticmethod
+    def overflow_corrected_diff(current: float, previous: float) -> float:
+        return (current - previous + np.pi) % (2 * np.pi) - np.pi
+
+    def get_speed(self, angle: float, dt: float) -> float:
+        angle_diff = Speedometer.overflow_corrected_diff(angle, self._last_angle)
+        angular_speed = angle_diff / dt
+        self._last_angle = angle
+        return angular_speed * self._wheel_radius
+
+
 # Alamak Webots wrappers
 # -------------------------------------------------------------------------------------------------
 
@@ -227,6 +248,9 @@ class IMU:
         self.compass = compass
         self.compass.enable(sampling_period_ms)
 
+        self.accel_filter = [0.0, 0.0, 0.0]  # Filtered values
+        self.filter_alpha = 0.2  # Adjust between 0 and 1 (lower = more filtering)
+        
 
     def get_angular_velocity(self) -> np.ndarray[3, float]:
         return np.array(self.gyro.getValues())
@@ -241,9 +265,17 @@ class IMU:
         return np.array(self.accel.getValues())
 
     def get_linear_acceleration(self) -> np.ndarray[3, float]:
-        a = self.accel.getValues()
-        a[2] -= 9.81
-        return np.array(a)
+        a_raw = np.array(self.accel.getValues())
+        
+        # Get gravity vector in sensor frame based on orientation
+        q = self.get_quaternion()
+        rot = Rotation.from_quat(q)
+        
+        # Rotate [0,0,9.81] by inverse of current rotation to get gravity in sensor frame
+        gravity_in_sensor_frame = rot.inv().apply([0, 0, 9.81])
+        
+        # Subtract gravity
+        return a_raw - gravity_in_sensor_frame
 
     def get_compass(self) -> np.ndarray[3, float]:
         return np.array(self.compass.getValues())
@@ -262,4 +294,5 @@ class CameraWrapper:
         return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
     def get_jpeg(self, quality=80) -> tuple[bool, np.ndarray]:
-        return cv2.imencode(".jpg", self.get_bgr(), [cv2.IMWRITE_JPEG_QUALITY, quality])
+        is_ok, jpg = cv2.imencode(".jpg", self.get_bgr(), [cv2.IMWRITE_JPEG_QUALITY, quality])
+        return jpg

@@ -34,7 +34,8 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.plot(steps, position_xyz[:, 2], label="z", color="#1f77b4")
         ax.set_title("Position")
         ax.set_ylabel("Position [m]")
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend()
         ax.grid(True)
 
     def rotation_plt(ax):
@@ -49,7 +50,8 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.set_title("Orientation")
         ax.set_ylabel("Orientation [deg]")
         ax.set_ylim([-180, 180])
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend()
         ax.grid(True)
 
     def accels_plt(ax):
@@ -61,7 +63,8 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.plot(steps, a_xyz_imu[:, 2], "--", label="z (IMU)", color="#1f77b4")
         ax.set_title("Accelerations (x, y, z)")
         ax.set_ylabel("Acceleration  [m/s^2]")
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend()
         ax.grid(True)
 
     def speed_plt(ax):
@@ -70,7 +73,8 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.plot(steps, data.speed_imu, ":", label="IMU", color=Colors.ORANGE)
         ax.set_title("Speed")
         ax.set_ylabel("Speed [m/s]")
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend()
         ax.grid(True)
 
     def speed_wheels_plt(ax):
@@ -78,7 +82,8 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.plot(steps, speed_wheels[:, 1], label="Rear right", color=Colors.CYAN)
         ax.set_title("Wheels speed")
         ax.set_ylabel("Speed [m/s]")
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend()
         ax.grid(True)
 
     def steering_plt(ax):
@@ -96,7 +101,8 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         )
         ax.set_title("Servo Angles")
         ax.set_ylabel("Angle [deg]")
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend(loc='center right')
         ax.grid(True)
 
     def velocities_plt(ax):
@@ -108,7 +114,8 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.plot(steps, v_xyz_imu[:, 2], "--", label="z (IMU)", color="#1f77b4")
         ax.set_title("Velocities (x, y, z)")
         ax.set_ylabel("Velocity [m/s]")
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend()
         ax.grid(True)
 
     def angular_velocities_plt(ax):
@@ -117,7 +124,8 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.plot(steps, angular_v_xyz_imu[:, 2], label="z", color="#1f77b4")
         ax.set_title("Angular Velocities (x, y, z)")
         ax.set_ylabel("Angular vel   [rad/s]")
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend()
         ax.grid(True)
 
     def decomposed_acceleration_plt(ax):
@@ -127,19 +135,20 @@ def save_plots(data: AlamakData, data_gt: AlamakDataGT):
         ax.plot(steps, data.a_normal_imu, "--", label="Normal (IMU)", color="#2ca02c")
         ax.set_title("Decomposed Acceleration")
         ax.set_ylabel("Acceleration [m/s²]")
-        ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        # ax.legend(bbox_to_anchor=(1.01, 1.05), loc="upper left")
+        ax.legend()
         ax.grid(True)
 
     time_plts = [
-        decomposed_acceleration_plt,
-        speed_plt,
-        accels_plt,
+        # accels_plt,
+        # decomposed_acceleration_plt,
         velocities_plt,
-        angular_velocities_plt,
+        speed_plt,
         speed_wheels_plt,
-        position_plt,
-        rotation_plt,
+        angular_velocities_plt,
         steering_plt,
+        rotation_plt,
+        position_plt,
     ]
 
     plt.figure()

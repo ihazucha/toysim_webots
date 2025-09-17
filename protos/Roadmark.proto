@@ -1,0 +1,30 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/MattePaint.proto"
+
+PROTO Roadmark [
+  field SFVec3f    translation 0 0 0
+  field SFRotation rotation    0 1 0 0
+  field SFFloat    radius      0.05
+  field SFFloat    height      0.001
+  field SFColor    color       1 1 1
+  field SFString   name        "roadmark"
+]
+{
+  Solid {
+    name IS name
+    translation IS translation
+    rotation IS rotation
+    children [
+      Shape {
+        appearance MattePaint {
+          baseColor IS color
+        }
+        geometry Cylinder {
+          height IS height
+          radius IS radius
+        }
+      }
+    ]
+  }
+}
